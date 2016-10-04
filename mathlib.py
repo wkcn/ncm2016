@@ -102,9 +102,9 @@ def LU_Inverse(L, U):
 #追赶法
 def chase(A, b):
     row, col = A.shape
-    lm = [.0 for _ in range(row)] #lm[0] = l_1_0
-    li = [.0 for _ in range(row)] #li[0] = l_0_0
-    u = [.0 for _ in range(row)] #u[0] = u_0_1
+    lm = [0. for _ in range(row)] #lm[0] = l_1_0
+    li = [0. for _ in range(row)] #li[0] = l_0_0
+    u = [0. for _ in range(row)] #u[0] = u_0_1
     li[0] = A[0,0] # l_1_1 = a_1_1
     u[0] = A[0,1] / li[0]
     for i in range(row-1):
@@ -125,4 +125,56 @@ def chase(A, b):
     for i in range(row - 2, -1, -1):
         x[i] = y[i] - u[i] * x[i+1]
     return x
+
+def iteration_solve(method_mask, A, b, x0, max_error, max_iter_num = -1):
+    x = x0.copy()
+    row, col = A.shape
+    iter_num = 0
+    last_error = 0
+    while True:
+        if max_iter_num != -1:
+            if iter_num >= max_iter_num:
+                print "iteration end, iter_num >= max_iter_num"
+                break
+        iter_num += 1
+
+        #雅可比迭代法
+        def Jacobi_Method():
+            oldx = x.copy()
+            for i in range(row):
+                s = 0.
+                for j in range(row):
+                    if i != j:
+                        s += A[i, j] * oldx[j]
+                x[i] = (b[i] - s) / A[i,i]
+
+        #高斯-塞德尔迭代法
+        def Gauss_Seidel_Method():
+            for i in range(row):
+                s = 0.
+                for j in range(row):
+                    if i != j:
+                        s += A[i, j] * x[j]
+                x[i] = (b[i] - s) / A[i,i]
+
+        if method_mask == "J":
+            Jacobi_Method()
+        elif method_mask == "G" or method_mask == "S":
+            Gauss_Seidel_Method()
+        else:
+            print "Error! Please use right method name"
+            break
+
+        error = get_error(A * x, b)
+        print "iter: ", iter_num, " error: ", error
+        #print x
+        if error == last_error:
+            print "iteration finished, current error is same as last_error"
+            break
+        last_error = error
+        if error <= max_error:
+            print "iteration finished, error <= max_error"
+            break
+    return x
+
 
